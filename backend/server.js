@@ -19,6 +19,7 @@ app.use(cors({
     "http://localhost:3001",
     "http://localhost:5173",
     "https://shipping-orpin.vercel.app",
+    "https://new-shipping-zeta.vercel.app",
     ...(process.env.RAILWAY_STATIC_URL ? [`https://${process.env.RAILWAY_STATIC_URL}`] : []),
     ...(process.env.APP_URL ? [process.env.APP_URL] : []),
   ],
