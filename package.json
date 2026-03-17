@@ -1,0 +1,19 @@
+{
+  "name": "kahlon-shipyard",
+  "version": "1.0.0",
+  "description": "Kahlon Shipyard Fleet Intelligence Platform",
+  "scripts": {
+    "start": "cd backend && node server.js",
+    "install": "cd backend && npm install",
+    "dev": "cd backend && npm run dev"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "devDependencies": {
+    "browser-sync": "^3.0.4",
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.14"
+  }
+}

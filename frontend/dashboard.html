@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Kahlon Shipyard — Dashboard</title>
+<link rel="stylesheet" href="css/base.css"/>
+<link rel="stylesheet" href="css/dashboard.css"/>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ════════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-row">
+      <div class="sidebar-icon">⚓</div>
+      <div>
+        <div class="sidebar-brand-name">Kahlon<br>Shipping</div>
+      </div>
+    </div>
+    <div class="sidebar-brand-sub">Fleet Intelligence</div>
+    <div class="sidebar-api-badge"><span class="api-dot"></span><span id="api-label">connecting…</span></div>
+  </div>
+
+  <nav>
+    <div class="nav-section-label">Overview</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)">
+      <span class="nav-icon">📊</span>Dashboard
+    </div>
+
+    <div class="nav-section-label">Fleet</div>
+    <div class="nav-item" onclick="showPage('ships',this)">
+      <span class="nav-icon">🚢</span>Fleet Registry
+    </div>
+    <div class="nav-item" onclick="showPage('eexi',this)">
+      <span class="nav-icon">📋</span>EEXI Compliance
+    </div>
+    <div class="nav-item" onclick="showPage('emissions',this)">
+      <span class="nav-icon">🌿</span>Emissions
+    </div>
+
+    <div class="nav-section-label">Market</div>
+    <div class="nav-item" onclick="showPage('cii',this)">
+      <span class="nav-icon">📈</span>CII Ratings
+    </div>
+    <div class="nav-item" onclick="showPage('fuel',this)">
+      <span class="nav-icon">⛽</span>Fuel Costs
+    </div>
+    <div class="nav-item" onclick="showPage('scrapping',this)">
+      <span class="nav-icon">🔧</span>Scrapping
+    </div>
+
+    <div class="nav-section-label">Financials</div>
+    <div class="nav-item" onclick="showPage('financials',this)">
+      <span class="nav-icon">💰</span>Dividends
+    </div>
+    <div class="nav-item" onclick="showPage('nav',this)">
+      <span class="nav-icon">📦</span>NAV Projections
+    </div>
+
+    <div class="nav-section-label">Billing</div>
+    <div class="nav-item" onclick="window.location.href='payments.html'">
+      <span class="nav-icon">💳</span>Payments
+    </div>
+  </nav>
+
+  <div class="sidebar-user" id="sidebar-user">
+    <div class="user-avatar" id="user-avatar">?</div>
+    <div class="user-info">
+      <div class="user-name" id="user-name">Loading…</div>
+      <div class="user-role" id="user-role">—</div>
+    </div>
+    <button class="logout-btn" onclick="Auth.logout()" title="Sign out">⏻</button>
+  </div>
+  <div class="sidebar-foot">SQLite · Express · Node.js<br>Kahlon Shipyard Ltd.</div>
+</aside>
+
+<!-- ═══ MAIN ════════════════════════════════════════════ -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-dot"></div>
+      <div class="page-title" id="page-title">Dashboard</div>
+    </div>
+    <div class="topbar-right">
+      <span id="conn-status">Connecting…</span>
+      <span style="color:#d0e8d8">|</span>
+      <span>12 Vessels · $830m Fleet</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══ DASHBOARD ════════════════════════════════ -->
+    <div class="page active" id="page-dashboard">
+      <div class="grid4" id="stat-grid" style="margin-bottom:22px"></div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">🌿 Emissions Comparison</span></div>
+          <div class="bars" id="ch-emissions"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">📈 Fleet Non-Compliance %</span></div>
+          <div class="bars" id="ch-cii"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">⛽ LNG vs VLSFO $/day</span></div>
+          <div class="bars" id="ch-fuel"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">💹 Dividend Yield %</span></div>
+          <div class="bars" id="ch-div"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SHIPS ════════════════════════════════════ -->
+    <div class="page" id="page-ships">
+      <div class="banner"><b>Fleet Summary:</b> 12 vessels · <b>Total Value:</b> $830m · All ships at <b>NTS Yard, China</b> · Dual Fuel LNG/LSFO Newcastlemax 208k DWT</div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🚢 Fleet Registry</span>
+          <button class="btn btn-primary btn-sm" onclick="openShipModal()">＋ Add Ship</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Ship Name</th><th>Price (USD m)</th><th>Yard</th><th>Size</th><th>Type</th><th>Delivery</th><th>Fuel</th><th>Actions</th></tr></thead>
+            <tbody id="ships-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ EEXI ══════════════════════════════════════ -->
+    <div class="page" id="page-eexi">
+      <div class="banner"><b>78.4%</b> of existing Capesize fleet is non-compliant with EEXI. Kahlon Shipyard vessels comply with a wide margin — calculated <b>1.51</b> vs required <b>2.37</b>.</div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📋 EEXI Compliance Records</span>
+          <button class="btn btn-primary btn-sm" onclick="openEexiModal()">＋ Add Record</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Ship</th><th>Built</th><th>Country</th><th>kDWT</th><th>Required</th><th>Calculated</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="eexi-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ EMISSIONS ════════════════════════════════ -->
+    <div class="page" id="page-emissions">
+      <div class="banner">LNG dual-fuel ships achieve <b>40% less CO₂</b>, <b>99% less NOx</b>, and <b>99% less SOx</b> vs standard Capesize. 12-ship fleet saves CO₂ equivalent to removing <b>40,000 cars</b> from roads.</div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🌿 Emissions Data</span>
+          <button class="btn btn-primary btn-sm" onclick="openEmModal()">＋ Add Record</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Ship Type</th><th>CO₂ (kt/yr)</th><th>NOx (t/yr)</th><th>SOx (t/yr)</th><th>Actions</th></tr></thead>
+            <tbody id="em-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="grid3">
+        <div class="card"><div class="card-header"><span class="card-title">CO₂</span></div><div class="bars" id="em-co2"></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">NOx</span></div><div class="bars" id="em-nox"></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">SOx</span></div><div class="bars" id="em-sox"></div></div>
+      </div>
+    </div>
+
+    <!-- ═══ CII ════════════════════════════════════════ -->
+    <div class="page" id="page-cii">
+      <div class="banner">Kahlon Shipyard's fleet maintains an <b>A-rating through 2030</b>. The average Capesize will be <b>D-rated from 2023</b> and <b>E-rated by 2030</b>. Estimated <b>89% non-compliance</b> by 2030.</div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">📈 CII Rating Projections</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Year</th><th>Kahlon</th><th>Avg Capesize</th><th>Non-Compliant %</th></tr></thead>
+              <tbody id="cii-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Non-Compliant Fleet by Year</span></div>
+          <div class="bars" id="cii-chart"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ FUEL ══════════════════════════════════════ -->
+    <div class="page" id="page-fuel">
+      <div class="banner">LNG costs projected below VLSFO by 2025, delivering <b>$950k/year saving</b> in 2025, growing to <b>$2m/year by 2027</b>. Plus CO₂ benefit of ~$2k/day.</div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">⛽ LNG vs VLSFO Cost ($/day)</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Year</th><th>LNG $/day</th><th>VLSFO $/day</th><th>Annual Saving</th></tr></thead>
+              <tbody id="fuel-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">LNG Fleet Share (%)</span></div>
+          <div class="bars" id="lng-chart"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SCRAPPING ════════════════════════════════ -->
+    <div class="page" id="page-scrapping">
+      <div class="banner">When the last cycle started there were ~600 Capesize vessels — today it's <b>1,900</b>. Up to <b>212 ships/year</b> face scrapping by 2030.</div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">🔧 Scrapping Candidates 2022–2030</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Year</th><th>@ 20 Years</th><th>@ 15 Years</th></tr></thead>
+              <tbody id="scrap-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Ships Scrapped @ 20 Years</span></div>
+          <div class="bars" id="scrap-chart"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ FINANCIALS ════════════════════════════════ -->
+    <div class="page" id="page-financials">
+      <div class="banner">Cash breakeven: <b>$23k/day</b> · Share price: <b>NOK 49</b> · Shares outstanding: <b>32.1m</b> · Kahlon Shipyard achieved 35% premium to Capesize index + $5k/day LNG/CO₂ benefit.</div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">💰 Dividend Scenarios</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Scenario</th><th>Rate/Day ($)</th><th>Div/Share ($)</th><th>Yield %</th></tr></thead>
+              <tbody id="fin-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Yield by Scenario</span></div>
+          <div class="bars" id="fin-chart"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ NAV ════════════════════════════════════════ -->
+    <div class="page" id="page-nav">
+      <div class="banner">Based on <b>32.1m shares outstanding</b>. NAV ranges from <b>$5.5/share</b> at current quotes to <b>$32.5/share</b> at previous peak asset value of <b>$148m/ship</b>.</div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">📦 NAV Per Share</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Scenario</th><th>Ship Value ($m)</th><th>NAV/Share ($)</th></tr></thead>
+              <tbody id="nav-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">NAV Upside</span></div>
+          <div class="bars" id="nav-chart"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<!-- ═══ MODALS ═════════════════════════════════════════ -->
+
+<!-- SHIP MODAL -->
+<div class="overlay" id="modal-ship">
+  <div class="modal">
+    <div class="modal-title">🚢 <span id="ship-modal-label">Add Ship</span></div>
+    <input type="hidden" id="ship-id"/>
+    <div class="form-group"><label class="form-label">Ship Name *</label><input class="form-input" id="f-sname" placeholder="Mount Everest"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Price (USD m)</label><input class="form-input" id="f-sprice" type="number" step="0.1" placeholder="69.2"/></div>
+      <div class="form-group"><label class="form-label">Yard</label><input class="form-input" id="f-syard" placeholder="NTS"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Size (DWTk)</label><input class="form-input" id="f-ssize" type="number" placeholder="208"/></div>
+      <div class="form-group"><label class="form-label">Delivery Date</label><input class="form-input" id="f-sdel" placeholder="Jan-25"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Ship Type</label><input class="form-input" id="f-stype" placeholder="Dual Fuel Newcastlemax"/></div>
+    <div class="form-group"><label class="form-label">Fuel Type</label>
+      <select class="form-input" id="f-sfuel"><option>LNG/LSFO</option><option>LNG</option><option>LSFO</option><option>HFO</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('ship')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveShip()">💾 Save Ship</button>
+    </div>
+  </div>
+</div>
+
+<!-- EEXI MODAL -->
+<div class="overlay" id="modal-eexi">
+  <div class="modal">
+    <div class="modal-title">📋 <span id="eexi-modal-label">Add EEXI Record</span></div>
+    <input type="hidden" id="eexi-id"/>
+    <div class="form-group"><label class="form-label">Ship Label *</label><input class="form-input" id="f-elabel" placeholder="Capesize Z"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Build Year</label><input class="form-input" id="f-eyear" type="number" placeholder="2020"/></div>
+      <div class="form-group"><label class="form-label">Build Country</label><input class="form-input" id="f-ecountry" placeholder="China"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Size (kDWT)</label><input class="form-input" id="f-esize" type="number" placeholder="208"/></div>
+      <div class="form-group"><label class="form-label">Compliant</label>
+        <select class="form-input" id="f-ecomp"><option value="Yes">Yes</option><option value="No">No</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">EEXI Required</label><input class="form-input" id="f-ereq" type="number" step="0.01" placeholder="2.37"/></div>
+      <div class="form-group"><label class="form-label">EEXI Calculated</label><input class="form-input" id="f-ecalc" type="number" step="0.01" placeholder="1.51"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('eexi')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEexi()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- EMISSIONS MODAL -->
+<div class="overlay" id="modal-em">
+  <div class="modal">
+    <div class="modal-title">🌿 <span id="em-modal-label">Add Emissions Record</span></div>
+    <input type="hidden" id="em-id"/>
+    <div class="form-group"><label class="form-label">Ship Type *</label><input class="form-input" id="f-emtype" placeholder="Standard Capesize"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">CO₂ (kt/year)</label><input class="form-input" id="f-emco2" type="number" step="0.1" placeholder="37"/></div>
+      <div class="form-group"><label class="form-label">NOx (t/year)</label><input class="form-input" id="f-emnox" type="number" placeholder="2110"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">SOx (t/year)</label><input class="form-input" id="f-emsox" type="number" placeholder="1640"/></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('em')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEm()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/app.js"></script>
+<script>
+// ── AUTH GUARD ────────────────────────────────────────
+if (!Auth.require()) throw new Error('Redirecting…');
+
+// ── SET API LABEL IN SIDEBAR ──────────────────────────
+(function() {
+  const lbl = document.getElementById('api-label');
+  if (lbl) lbl.textContent = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'localhost:3001'
+    : window.location.hostname;
+})();
+
+// ── POPULATE USER IN SIDEBAR ──────────────────────────
+(function() {
+  const user = Auth.user();
+  if (!user) return;
+  const initials = user.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('user-avatar').textContent = initials;
+  document.getElementById('user-name').textContent = user.name;
+  document.getElementById('user-role').textContent = user.role;
+})();
+
+// ── DASHBOARD ─────────────────────────────────────────
+async function loadDashboard() {
+  const [sum, em, cii, fuel, fin] = await Promise.all([
+    api('/summary'), api('/emissions'), api('/cii'),
+    api('/fuel-costs'), api('/financials')
+  ]);
+  if (!sum) return;
+  document.getElementById('stat-grid').innerHTML = `
+    <div class="stat"><span class="stat-icon">🚢</span><div class="stat-label">Total Vessels</div><div class="stat-value">${sum.total_ships}</div><div class="stat-note">Dual Fuel Newcastlemax</div></div>
+    <div class="stat gold"><span class="stat-icon">💵</span><div class="stat-label">Fleet Value</div><div class="stat-value">$${sum.total_fleet_value}m</div><div class="stat-note">Avg $${sum.avg_ship_price}m/ship</div></div>
+    <div class="stat"><span class="stat-icon">✅</span><div class="stat-label">EEXI Compliant</div><div class="stat-value">${sum.eexi_compliant}/${sum.eexi_compliant+sum.eexi_noncompliant}</div><div class="stat-note">Wide compliance margin</div></div>
+    <div class="stat coral"><span class="stat-icon">🌿</span><div class="stat-label">CO₂ Reduction</div><div class="stat-value">${sum.co2_reduction_pct}%</div><div class="stat-note">vs standard Capesize</div></div>
+  `;
+  if (em) {
+    const mx = Math.max(...em.map(e=>e.co2_kt_per_year));
+    renderBars('ch-emissions', em.map(e=>({label:e.ship_type.slice(0,22),v:e.co2_kt_per_year,display:e.co2_kt_per_year+'kt'})), mx, 'b-green');
+  }
+  if (cii) renderBars('ch-cii', cii.map(c=>({label:String(c.year),v:c.fleet_noncompliant_pct,display:c.fleet_noncompliant_pct+'%'})), 100, 'b-coral');
+  if (fuel) {
+    renderBars('ch-fuel', fuel.flatMap(f=>[
+      {label:f.year+' LNG',v:f.lng_usd_per_day,display:'$'+fmt(f.lng_usd_per_day)},
+      {label:f.year+' VLSFO',v:f.vlsfo_usd_per_day,display:'$'+fmt(f.vlsfo_usd_per_day)},
+    ]), 22000, 'b-gold');
+  }
+  if (fin) renderBars('ch-div', fin.map(f=>({label:f.scenario,v:f.yield_pct,display:f.yield_pct+'%'})), 500, 'b-mint');
+  document.getElementById('conn-status').textContent = '● Live';
+}
+
+// ── SHIPS ─────────────────────────────────────────────
+async function loadShips() {
+  const data = await api('/ships');
+  const tb = document.getElementById('ships-tbody');
+  if (!data?.length) { tb.innerHTML='<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--muted)">No ships found</td></tr>'; return; }
+  tb.innerHTML = data.map(s=>`<tr>
+    <td class="num muted">${s.id}</td>
+    <td class="strong">${s.ship_name}</td>
+    <td class="num">$<span class="green">${s.price_usdm}</span>m</td>
+    <td><span class="tag">${s.yard||'—'}</span></td>
+    <td class="num">${s.size_dwtk||'—'}k</td>
+    <td style="font-size:.72rem;color:var(--muted)">${s.ship_type||'—'}</td>
+    <td><span class="pill pill-a">${s.target_delivery_date||'—'}</span></td>
+    <td><span class="tag">${s.fuel_type||'—'}</span></td>
+    <td style="display:flex;gap:5px">
+      <button class="btn btn-edit btn-sm" onclick='editShip(${JSON.stringify(s)})'>✏️</button>
+      <button class="btn btn-danger btn-sm" onclick="delShip(${s.id})">🗑️</button>
+    </td>
+  </tr>`).join('');
+}
+function openShipModal(s=null) {
+  document.getElementById('ship-modal-label').textContent = s ? 'Edit Ship' : 'Add Ship';
+  document.getElementById('ship-id').value = s?.id || '';
+  document.getElementById('f-sname').value = s?.ship_name || '';
+  document.getElementById('f-sprice').value = s?.price_usdm || '';
+  document.getElementById('f-syard').value = s?.yard || '';
+  document.getElementById('f-ssize').value = s?.size_dwtk || '';
+  document.getElementById('f-sdel').value = s?.target_delivery_date || '';
+  document.getElementById('f-stype').value = s?.ship_type || '';
+  document.getElementById('f-sfuel').value = s?.fuel_type || 'LNG/LSFO';
+  openModal('ship');
+}
+function editShip(s) { openShipModal(s); }
+async function saveShip() {
+  const id = document.getElementById('ship-id').value;
+  const body = {
+    ship_name: document.getElementById('f-sname').value,
+    price_usdm: parseFloat(document.getElementById('f-sprice').value)||null,
+    yard: document.getElementById('f-syard').value,
+    size_dwtk: parseInt(document.getElementById('f-ssize').value)||null,
+    ship_type: document.getElementById('f-stype').value,
+    target_delivery_date: document.getElementById('f-sdel').value,
+    fuel_type: document.getElementById('f-sfuel').value,
+  };
+  if (!body.ship_name) { toast('Ship name required', false); return; }
+  await api(id?`/ships/${id}`:'/ships', {method:id?'PUT':'POST',body:JSON.stringify(body)});
+  toast(id ? 'Ship updated ✓' : 'Ship added ✓');
+  closeModal('ship'); loadShips();
+}
+async function delShip(id) {
+  if (!confirm('Delete this ship?')) return;
+  await api(`/ships/${id}`, {method:'DELETE'});
+  toast('Ship deleted'); loadShips();
+}
+
+// ── EEXI ──────────────────────────────────────────────
+async function loadEexi() {
+  const data = await api('/eexi');
+  document.getElementById('eexi-tbody').innerHTML = (data||[]).map(e=>`<tr>
+    <td class="strong">${e.ship_label}</td>
+    <td class="num">${e.build_year}</td>
+    <td>${e.build_country}</td>
+    <td class="num">${e.size_kdwt}k</td>
+    <td class="num">${e.eexi_required}</td>
+    <td class="num ${e.compliant==='Yes'?'green':'coral'}">${e.eexi_calculated}</td>
+    <td><span class="pill pill-${e.compliant.toLowerCase()}">${e.compliant}</span></td>
+    <td style="display:flex;gap:5px">
+      <button class="btn btn-edit btn-sm" onclick='editEexi(${JSON.stringify(e)})'>✏️</button>
+      <button class="btn btn-danger btn-sm" onclick="delEexi(${e.id})">🗑️</button>
+    </td>
+  </tr>`).join('');
+}
+function openEexiModal(e=null) {
+  document.getElementById('eexi-modal-label').textContent = e ? 'Edit EEXI Record' : 'Add EEXI Record';
+  document.getElementById('eexi-id').value = e?.id || '';
+  document.getElementById('f-elabel').value = e?.ship_label || '';
+  document.getElementById('f-eyear').value = e?.build_year || '';
+  document.getElementById('f-ecountry').value = e?.build_country || '';
+  document.getElementById('f-esize').value = e?.size_kdwt || '';
+  document.getElementById('f-ereq').value = e?.eexi_required || '';
+  document.getElementById('f-ecalc').value = e?.eexi_calculated || '';
+  document.getElementById('f-ecomp').value = e?.compliant || 'Yes';
+  openModal('eexi');
+}
+function editEexi(e) { openEexiModal(e); }
+async function saveEexi() {
+  const id = document.getElementById('eexi-id').value;
+  const body = {
+    ship_label: document.getElementById('f-elabel').value,
+    build_year: parseInt(document.getElementById('f-eyear').value),
+    build_country: document.getElementById('f-ecountry').value,
+    size_kdwt: parseInt(document.getElementById('f-esize').value),
+    eexi_required: parseFloat(document.getElementById('f-ereq').value),
+    eexi_calculated: parseFloat(document.getElementById('f-ecalc').value),
+    compliant: document.getElementById('f-ecomp').value,
+  };
+  if (!body.ship_label) { toast('Label required', false); return; }
+  await api(id?`/eexi/${id}`:'/eexi', {method:id?'PUT':'POST',body:JSON.stringify(body)});
+  toast(id ? 'Updated ✓' : 'Added ✓');
+  closeModal('eexi'); loadEexi();
+}
+async function delEexi(id) {
+  if (!confirm('Delete record?')) return;
+  await api(`/eexi/${id}`, {method:'DELETE'});
+  toast('Deleted'); loadEexi();
+}
+
+// ── EMISSIONS ─────────────────────────────────────────
+async function loadEmissions() {
+  const data = await api('/emissions');
+  document.getElementById('em-tbody').innerHTML = (data||[]).map(e=>`<tr>
+    <td class="strong">${e.ship_type}</td>
+    <td class="num green">${e.co2_kt_per_year} kt</td>
+    <td class="num">${e.nox_t_per_year} t</td>
+    <td class="num">${e.sox_t_per_year} t</td>
+    <td style="display:flex;gap:5px">
+      <button class="btn btn-edit btn-sm" onclick='editEm(${JSON.stringify(e)})'>✏️</button>
+      <button class="btn btn-danger btn-sm" onclick="delEm(${e.id})">🗑️</button>
+    </td>
+  </tr>`).join('');
+  if (data?.length) {
+    const mx = k => Math.max(...data.map(d=>d[k]||0.01));
+    renderBars('em-co2', data.map(d=>({label:d.ship_type.slice(0,16),v:d.co2_kt_per_year,display:d.co2_kt_per_year+'kt'})), mx('co2_kt_per_year'), 'b-gold');
+    renderBars('em-nox', data.map(d=>({label:d.ship_type.slice(0,16),v:d.nox_t_per_year||0.01,display:d.nox_t_per_year+'t'})), mx('nox_t_per_year'), 'b-coral');
+    renderBars('em-sox', data.map(d=>({label:d.ship_type.slice(0,16),v:d.sox_t_per_year||0.01,display:d.sox_t_per_year+'t'})), mx('sox_t_per_year'), 'b-sky');
+  }
+}
+function openEmModal(e=null) {
+  document.getElementById('em-modal-label').textContent = e ? 'Edit Emissions Record' : 'Add Emissions Record';
+  document.getElementById('em-id').value = e?.id || '';
+  document.getElementById('f-emtype').value = e?.ship_type || '';
+  document.getElementById('f-emco2').value = e?.co2_kt_per_year || '';
+  document.getElementById('f-emnox').value = e?.nox_t_per_year || '';
+  document.getElementById('f-emsox').value = e?.sox_t_per_year || '';
+  openModal('em');
+}
+function editEm(e) { openEmModal(e); }
+async function saveEm() {
+  const id = document.getElementById('em-id').value;
+  const body = {
+    ship_type: document.getElementById('f-emtype').value,
+    co2_kt_per_year: parseFloat(document.getElementById('f-emco2').value),
+    nox_t_per_year: parseFloat(document.getElementById('f-emnox').value),
+    sox_t_per_year: parseFloat(document.getElementById('f-emsox').value),
+  };
+  if (!body.ship_type) { toast('Type required', false); return; }
+  await api(id?`/emissions/${id}`:'/emissions', {method:id?'PUT':'POST',body:JSON.stringify(body)});
+  toast(id ? 'Updated ✓' : 'Added ✓');
+  closeModal('em'); loadEmissions();
+}
+async function delEm(id) {
+  if (!confirm('Delete record?')) return;
+  await api(`/emissions/${id}`, {method:'DELETE'});
+  toast('Deleted'); loadEmissions();
+}
+
+// ── CII ───────────────────────────────────────────────
+async function loadCii() {
+  const data = await api('/cii');
+  if (!data) return;
+  document.getElementById('cii-tbody').innerHTML = data.map(c=>`<tr>
+    <td class="strong">${c.year}</td>
+    <td><span class="pill pill-a">${c.kahlon_rating}</span></td>
+    <td><span class="pill pill-${c.avg_capesize_rating.toLowerCase()}">${c.avg_capesize_rating}</span></td>
+    <td class="num ${c.fleet_noncompliant_pct>70?'coral':c.fleet_noncompliant_pct>30?'gold':'green'}">${c.fleet_noncompliant_pct}%</td>
+  </tr>`).join('');
+  renderBars('cii-chart', data.map(c=>({label:String(c.year),v:c.fleet_noncompliant_pct,display:c.fleet_noncompliant_pct+'%'})), 100, 'b-coral');
+}
+
+// ── FUEL ──────────────────────────────────────────────
+async function loadFuel() {
+  const [fuel, lng] = await Promise.all([api('/fuel-costs'), api('/lng-share')]);
+  if (fuel) {
+    document.getElementById('fuel-tbody').innerHTML = fuel.map(f=>`<tr>
+      <td class="strong">${f.year}</td>
+      <td class="num">$<span class="green">${fmt(f.lng_usd_per_day)}</span></td>
+      <td class="num">$${fmt(f.vlsfo_usd_per_day)}</td>
+      <td class="num ${f.incremental_saving_usd_per_year>=0?'green':'coral'}">${fmtSave(f.incremental_saving_usd_per_year)}</td>
+    </tr>`).join('');
+  }
+  if (lng) renderBars('lng-chart', lng.map(l=>({label:String(l.year),v:l.lng_capable_pct,display:l.lng_capable_pct+'%'})), 5, 'b-green');
+}
+
+// ── SCRAPPING ─────────────────────────────────────────
+async function loadScrapping() {
+  const data = await api('/scrapping');
+  if (!data) return;
+  document.getElementById('scrap-tbody').innerHTML = data.map(s=>`<tr>
+    <td class="strong">${s.year}</td>
+    <td class="num green">${s.scrapped_at_20_years}</td>
+    <td class="num">${s.scrapped_at_15_years}</td>
+  </tr>`).join('');
+  renderBars('scrap-chart', data.map(s=>({label:String(s.year),v:s.scrapped_at_20_years,display:String(s.scrapped_at_20_years)})), 220, 'b-gold');
+}
+
+// ── FINANCIALS ────────────────────────────────────────
+async function loadFinancials() {
+  const data = await api('/financials');
+  if (!data) return;
+  document.getElementById('fin-tbody').innerHTML = data.map(f=>`<tr>
+    <td class="strong">${f.scenario}</td>
+    <td class="num">$${fmt(f.rate_per_day)}</td>
+    <td class="num green">$${f.dividend_per_share_usd}</td>
+    <td class="num green">${f.yield_pct}%</td>
+  </tr>`).join('');
+  renderBars('fin-chart', data.map(f=>({label:f.scenario,v:f.yield_pct,display:f.yield_pct+'%'})), 500, 'b-mint');
+}
+
+// ── NAV ───────────────────────────────────────────────
+async function loadNav() {
+  const data = await api('/nav');
+  if (!data) return;
+  document.getElementById('nav-tbody').innerHTML = data.map(n=>`<tr>
+    <td class="strong">${n.scenario}</td>
+    <td class="num">$${n.ship_value_usdm}m</td>
+    <td class="num green">$${n.nav_per_share_usd}</td>
+  </tr>`).join('');
+  renderBars('nav-chart', data.map(n=>({label:n.scenario,v:n.nav_per_share_usd,display:'$'+n.nav_per_share_usd})), 35, 'b-green');
+}
+
+// ── LOADERS MAP ───────────────────────────────────────
+window.LOADERS = {
+  dashboard: loadDashboard, ships: loadShips, eexi: loadEexi,
+  emissions: loadEmissions, cii: loadCii, fuel: loadFuel,
+  scrapping: loadScrapping, financials: loadFinancials, nav: loadNav
+};
+
+// ── INIT ──────────────────────────────────────────────
+initModalClose();
+loadDashboard();
+</script>
+</body>
+</html>

@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Kahlon Shipyard — Payments</title>
+<link rel="stylesheet" href="css/base.css"/>
+<link rel="stylesheet" href="css/dashboard.css"/>
+<!-- Razorpay SDK (official, free, no API key needed to load) -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<!-- Cashfree SDK (official, free) -->
+<script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+<style>
+.pay-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+
+.gw-tabs { display:flex; gap:0; background:rgba(30,92,58,.08); border-radius:10px; padding:4px; margin-bottom:22px; }
+.gw-tab {
+  flex:1; text-align:center; padding:11px 8px; border-radius:7px;
+  font-size:.82rem; font-weight:600; cursor:pointer; transition:all .18s;
+  color:var(--muted); border:none; background:transparent;
+  font-family:var(--ff-body); display:flex; align-items:center; justify-content:center; gap:7px;
+}
+.gw-tab.active { background:#fff; color:var(--pine); box-shadow:var(--shadow-sm); }
+.gw-tab .gw-badge {
+  font-size:.58rem; background:rgba(30,92,58,.1); color:var(--moss);
+  border-radius:20px; padding:1px 7px; font-family:var(--ff-mono);
+}
+.gw-tab.active .gw-badge { background:rgba(30,92,58,.15); }
+
+.pay-panel { display:none; }
+.pay-panel.active { display:block; }
+
+/* Razorpay branded button */
+.rzp-btn {
+  width:100%; padding:14px; border-radius:8px; border:none; cursor:pointer;
+  background:linear-gradient(135deg,#072654,#1a4a9e);
+  color:#fff; font-size:.95rem; font-weight:700;
+  font-family:var(--ff-body); display:flex; align-items:center;
+  justify-content:center; gap:10px; transition:all .2s;
+  box-shadow:0 4px 18px rgba(7,38,84,.35); margin-bottom:10px;
+}
+.rzp-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(7,38,84,.4); }
+.rzp-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+.rzp-logo { width:22px; height:22px; background:#fff; border-radius:4px; display:flex; align-items:center; justify-content:center; }
+.rzp-logo svg { width:14px; height:14px; }
+
+/* Cashfree branded button */
+.cf-btn {
+  width:100%; padding:14px; border-radius:8px; border:none; cursor:pointer;
+  background:linear-gradient(135deg,#1a3a6e,#2856a8);
+  color:#fff; font-size:.95rem; font-weight:700;
+  font-family:var(--ff-body); display:flex; align-items:center;
+  justify-content:center; gap:10px; transition:all .2s;
+  box-shadow:0 4px 18px rgba(26,58,110,.35); margin-bottom:10px;
+}
+.cf-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(26,58,110,.4); }
+.cf-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+
+.amount-wrap { display:grid; grid-template-columns:110px 1fr; gap:12px; }
+.currency-sel { font-family:var(--ff-mono) !important; font-weight:600; }
+
+/* What you'll pay box */
+.pay-summary-box {
+  background:rgba(30,92,58,.05); border:1px solid rgba(30,92,58,.15);
+  border-radius:var(--r-sm); padding:14px 16px; margin-bottom:18px;
+}
+.psb-row { display:flex; justify-content:space-between; font-size:.78rem; margin-bottom:6px; color:var(--muted); }
+.psb-row:last-child { margin-bottom:0; border-top:1px solid rgba(30,92,58,.12); padding-top:8px; font-weight:700; color:var(--pine); font-size:.88rem; }
+.psb-row span:last-child { font-family:var(--ff-mono); }
+
+/* Features list */
+.feature-list { display:flex; flex-direction:column; gap:7px; margin-bottom:18px; }
+.feature-item { display:flex; align-items:center; gap:9px; font-size:.75rem; color:var(--muted); }
+.feature-item::before { content:'✓'; color:var(--sage); font-weight:700; flex-shrink:0; }
+
+/* Country bar */
+.region-bar {
+  display:flex; align-items:center; gap:8px; padding:10px 14px;
+  border-radius:var(--r-sm); font-size:.74rem; margin-bottom:16px;
+  border:1px solid rgba(74,158,190,.25); background:rgba(74,158,190,.06); color:#2a6e9e;
+}
+.region-bar.india { border-color:rgba(255,153,0,.3); background:rgba(255,153,0,.07); color:#8a5200; }
+
+/* Success overlay */
+.success-overlay {
+  display:none; position:fixed; inset:0; background:rgba(7,24,16,.85);
+  z-index:900; align-items:center; justify-content:center; backdrop-filter:blur(6px);
+}
+.success-overlay.open { display:flex; }
+.success-box {
+  background:#fff; border-radius:18px; padding:44px 48px;
+  text-align:center; min-width:340px; animation:modalIn .25s ease;
+  box-shadow:0 30px 100px rgba(0,0,0,.4);
+}
+.success-icon { font-size:4rem; margin-bottom:16px; display:block; }
+.success-title { font-family:var(--ff-display); font-size:1.7rem; font-weight:600; color:var(--pine); margin-bottom:8px; }
+.success-sub { font-size:.82rem; color:var(--muted); margin-bottom:20px; line-height:1.6; }
+.success-ref {
+  font-family:var(--ff-mono); font-size:.72rem; color:var(--moss);
+  background:rgba(30,92,58,.07); border:1px solid rgba(30,92,58,.15);
+  border-radius:6px; padding:8px 16px; display:inline-block; margin-bottom:22px;
+}
+
+/* Status pills */
+.s-completed { color:#1a7a45; font-weight:600; }
+.s-created   { color:#8a6000; font-weight:600; }
+.s-failed    { color:var(--coral); font-weight:600; }
+.s-refunded  { color:var(--sky); font-weight:600; }
+
+.secure-row { display:flex; align-items:center; justify-content:center; gap:6px; font-size:.65rem; color:var(--muted); margin-top:12px; font-family:var(--ff-mono); }
+
+/* spinner */
+.btn-spin { width:16px; height:16px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; display:none; }
+.btn-spin.show { display:inline-block; }
+@keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-row">
+      <div class="sidebar-icon">⚓</div>
+      <div><div class="sidebar-brand-name">Kahlon<br>Shipyard</div></div>
+    </div>
+    <div class="sidebar-brand-sub">Fleet Intelligence</div>
+    <div class="sidebar-api-badge"><span class="api-dot"></span><span id="api-label">connecting…</span></div>
+  </div>
+  <nav>
+    <div class="nav-section-label">Overview</div>
+    <div class="nav-item" onclick="location.href='dashboard.html'"><span class="nav-icon">📊</span>Dashboard</div>
+    <div class="nav-section-label">Fleet</div>
+    <div class="nav-item" onclick="location.href='dashboard.html'"><span class="nav-icon">🚢</span>Fleet Registry</div>
+    <div class="nav-section-label">Billing</div>
+    <div class="nav-item active"><span class="nav-icon">💳</span>Payments</div>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-avatar" id="user-avatar">?</div>
+    <div class="user-info">
+      <div class="user-name" id="user-name">Loading…</div>
+      <div class="user-role" id="user-role">—</div>
+    </div>
+    <button class="logout-btn" onclick="Auth.logout()" title="Sign out">⏻</button>
+  </div>
+  <div class="sidebar-foot">SQLite · Express · Node.js<br>Kahlon Shipyard Ltd.</div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-dot"></div>
+      <div class="page-title">Payment Centre</div>
+    </div>
+    <div class="topbar-right">
+      <span style="color:var(--sage)">● Live</span>
+      <span style="color:#d0e8d8">|</span>
+      <span id="region-label">Detecting region…</span>
+      <span style="color:#d0e8d8">|</span>
+      <span>UPI: 9878097904@ptyes</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- STATS -->
+    <div class="pay-grid">
+      <div class="stat"><span class="stat-icon">💰</span><div class="stat-label">Total Revenue</div><div class="stat-value" id="s-rev">₹0</div><div class="stat-note">Completed</div></div>
+      <div class="stat"><span class="stat-icon">✅</span><div class="stat-label">Completed</div><div class="stat-value" id="s-ok">0</div><div class="stat-note">Transactions</div></div>
+      <div class="stat gold"><span class="stat-icon">⏳</span><div class="stat-label">Pending</div><div class="stat-value" id="s-pend">0</div><div class="stat-note">Awaiting</div></div>
+      <div class="stat coral"><span class="stat-icon">❌</span><div class="stat-label">Failed</div><div class="stat-value" id="s-fail">0</div><div class="stat-note">Declined</div></div>
+    </div>
+
+    <div class="grid2">
+
+      <!-- LEFT: PAYMENT FORM -->
+      <div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">💳 Make a Payment</span></div>
+
+          <!-- Region bar -->
+          <div class="region-bar" id="region-bar">
+            🌐 <span id="region-text">Detecting your region…</span>
+          </div>
+
+          <!-- Gateway tabs -->
+          <div class="gw-tabs">
+            <button class="gw-tab" id="tab-rzp" onclick="switchGateway('razorpay')">
+              <span>🔵</span> Razorpay <span class="gw-badge">UPI · Cards · Wallets</span>
+            </button>
+            <button class="gw-tab" id="tab-cf" onclick="switchGateway('cashfree')">
+              <span>🟦</span> Cashfree <span class="gw-badge">UPI · Cards · NetBanking</span>
+            </button>
+          </div>
+
+          <!-- Amount -->
+          <div class="amount-wrap" style="margin-bottom:14px">
+            <div class="form-group" style="margin:0">
+              <label class="form-label">Currency</label>
+              <select class="form-input currency-sel" id="pay-currency" onchange="updateSummary()">
+                <option value="INR" selected>₹ INR</option>
+                <option value="USD">$ USD</option>
+                <option value="EUR">€ EUR</option>
+                <option value="GBP">£ GBP</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="form-label">Amount *</label>
+              <input class="form-input" id="pay-amount" type="number" placeholder="500.00" min="1" step="0.01" oninput="updateSummary()" style="font-family:var(--ff-mono);font-size:1rem;font-weight:600"/>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <input class="form-input" id="pay-desc" placeholder="e.g. Fleet subscription — March 2026"/>
+          </div>
+
+          <!-- Amount summary -->
+          <div class="pay-summary-box" id="pay-summary-box" style="display:none">
+            <div class="psb-row"><span>Subtotal</span><span id="psb-sub">—</span></div>
+            <div class="psb-row"><span>Platform fee</span><span>₹0.00</span></div>
+            <div class="psb-row"><span>Total payable</span><span id="psb-total">—</span></div>
+          </div>
+
+          <!-- RAZORPAY PANEL -->
+          <div class="pay-panel" id="panel-razorpay">
+            <div class="feature-list">
+              <div class="feature-item">Google Pay, PhonePe, Paytm, all UPI apps</div>
+              <div class="feature-item">Visa, Mastercard, RuPay, Amex cards</div>
+              <div class="feature-item">Net Banking — all major Indian banks</div>
+              <div class="feature-item">Money credited to 9878097904@ptyes instantly</div>
+            </div>
+            <button class="rzp-btn" id="rzp-btn" onclick="payRazorpay()">
+              <span class="btn-spin" id="rzp-spin"></span>
+              <span class="rzp-logo">
+                <svg viewBox="0 0 24 24" fill="#072654"><path d="M21.6 0H2.4A2.4 2.4 0 000 2.4v19.2A2.4 2.4 0 002.4 24h19.2a2.4 2.4 0 002.4-2.4V2.4A2.4 2.4 0 0021.6 0zm-9.1 17.5L9 11.2l7.5-9.7-4.7 8.2 3.8.1-7.3 9.4 4.2-1.7z"/></svg>
+              </span>
+              Pay with Razorpay
+            </button>
+            <div class="secure-row">🔒 256-bit SSL · PCI DSS · RBI Compliant · Powered by Razorpay</div>
+          </div>
+
+          <!-- CASHFREE PANEL -->
+          <div class="pay-panel" id="panel-cashfree">
+            <div class="feature-list">
+              <div class="feature-item">All UPI apps including Google Pay &amp; PhonePe</div>
+              <div class="feature-item">150+ Banks Net Banking supported</div>
+              <div class="feature-item">Credit &amp; Debit cards, EMI options</div>
+              <div class="feature-item">Instant settlement to 9878097904@ptyes</div>
+            </div>
+            <button class="cf-btn" id="cf-btn" onclick="payCashfree()">
+              <span class="btn-spin" id="cf-spin"></span>
+              <span>🏦</span>
+              Pay with Cashfree
+            </button>
+            <div class="secure-row">🔒 256-bit SSL · PCI DSS · RBI Compliant · Powered by Cashfree</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RIGHT: HISTORY -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">📜 Transaction History</span>
+            <button class="btn btn-ghost btn-sm" onclick="loadHistory()">↻ Refresh</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Reference</th><th>Amount</th><th>Gateway</th><th>Status</th><th>Date</th><th></th></tr>
+              </thead>
+              <tbody id="hist-tbody">
+                <tr><td colspan="6" style="text-align:center;padding:28px;color:var(--muted)">No transactions yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><span class="card-title">📊 Revenue by Gateway</span></div>
+          <div class="bars" id="gw-bars"><div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">No data yet</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- SUCCESS OVERLAY -->
+<div class="success-overlay" id="success-overlay">
+  <div class="success-box">
+    <span class="success-icon">🎉</span>
+    <div class="success-title">Payment Successful!</div>
+    <div class="success-sub">Your payment has been received and verified.<br>Funds will be credited to <strong>9878097904@ptyes</strong>.</div>
+    <div class="success-ref" id="success-ref">—</div>
+    <button class="btn btn-primary" onclick="closeSuccess()">Done</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/app.js"></script>
+<script>
+if (!Auth.require()) throw new Error('Auth required');
+
+// ── SET API LABEL IN SIDEBAR ──────────────────────────
+(function() {
+  const lbl = document.getElementById('api-label');
+  if (lbl) lbl.textContent = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'localhost:3001'
+    : window.location.hostname;
+})();
+
+// ── SIDEBAR USER ──────────────────────────────────────
+(function() {
+  const u = Auth.user();
+  if (!u) return;
+  document.getElementById('user-avatar').textContent = u.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('user-name').textContent = u.name;
+  document.getElementById('user-role').textContent = u.role;
+})();
+
+let activeGateway = 'razorpay';
+
+// ── REGION DETECTION ──────────────────────────────────
+async function detectRegion() {
+  try {
+    const r = await fetch('https://ipapi.co/json/');
+    const d = await r.json();
+    const isIN = d.country_code === 'IN';
+    const bar  = document.getElementById('region-bar');
+    document.getElementById('region-label').textContent = '📍 ' + (d.country_name || 'Unknown');
+    if (isIN) {
+      bar.className = 'region-bar india';
+      document.getElementById('region-text').textContent = '🇮🇳 India detected — Razorpay recommended for instant UPI & Google Pay';
+      document.getElementById('pay-currency').value = 'INR';
+      switchGateway('razorpay');
+    } else {
+      document.getElementById('region-text').textContent = `🌍 ${d.country_name||'International'} detected — Razorpay supports cards & international UPI`;
+      switchGateway('razorpay');
+    }
+  } catch {
+    document.getElementById('region-label').textContent = '🌐 Unknown';
+    switchGateway('razorpay');
+  }
+}
+
+// ── GATEWAY SWITCH ────────────────────────────────────
+function switchGateway(gw) {
+  activeGateway = gw;
+  document.querySelectorAll('.gw-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.pay-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + (gw === 'razorpay' ? 'rzp' : 'cf')).classList.add('active');
+  document.getElementById('panel-' + gw).classList.add('active');
+}
+
+// ── AMOUNT SUMMARY ────────────────────────────────────
+function updateSummary() {
+  const amount = parseFloat(document.getElementById('pay-amount').value);
+  const cur    = document.getElementById('pay-currency').value;
+  const sym    = { INR:'₹', USD:'$', EUR:'€', GBP:'£' }[cur] || cur;
+  const box    = document.getElementById('pay-summary-box');
+  if (!amount || amount <= 0) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  document.getElementById('psb-sub').textContent   = sym + amount.toFixed(2);
+  document.getElementById('psb-total').textContent = sym + amount.toFixed(2);
+}
+
+// ── VALIDATE ──────────────────────────────────────────
+function getAmount() {
+  const a = parseFloat(document.getElementById('pay-amount').value);
+  if (!a || a <= 0) { toast('Enter a valid amount', false); return null; }
+  return a;
+}
+
+// ── RAZORPAY FLOW ─────────────────────────────────────
+async function payRazorpay() {
+  const amount = getAmount(); if (!amount) return;
+  const currency    = document.getElementById('pay-currency').value;
+  const description = document.getElementById('pay-desc').value || 'Kahlon Shipyard Payment';
+  const btn  = document.getElementById('rzp-btn');
+  const spin = document.getElementById('rzp-spin');
+  btn.disabled = true; spin.classList.add('show');
+
+  try {
+    // 1. Create order on backend
+    const order = await api('/payments/razorpay/create-order', {
+      method: 'POST',
+      body: JSON.stringify({ amount, currency, description })
+    });
+
+    if (!order || order.error) {
+      toast(order?.error || 'Could not create order', false);
+      return;
+    }
+
+    // 2. Open Razorpay checkout (official SDK — real payment page)
+    const options = {
+      key:         order.key_id,
+      amount:      order.amount,       // in paise
+      currency:    order.currency,
+      name:        'Kahlon Shipyard',
+      description: description,
+      order_id:    order.order_id,
+      prefill: {
+        name:  Auth.user()?.name  || '',
+        email: Auth.user()?.email || '',
+      },
+      notes: { reference: order.reference },
+      theme: { color: '#1e5c3a' },
+      // Handler called after successful payment
+      handler: async function(response) {
+        // 3. Verify signature on backend
+        const verify = await api('/payments/razorpay/verify', {
+          method: 'POST',
+          body: JSON.stringify({
+            razorpay_order_id:   response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature:  response.razorpay_signature,
+          })
+        });
+        if (verify?.success) {
+          showSuccess(order.reference);
+          loadSummary();
+          loadHistory();
+        } else {
+          toast('Payment verification failed', false);
+        }
+      },
+      modal: {
+        ondismiss: function() {
+          toast('Payment cancelled', false);
+          btn.disabled = false; spin.classList.remove('show');
+          loadHistory(); // update any pending record
+        }
+      }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.on('payment.failed', function(response) {
+      toast('Payment failed: ' + response.error.description, false);
+      btn.disabled = false; spin.classList.remove('show');
+      loadHistory();
+    });
+    rzp.open();
+
+  } catch(e) {
+    toast('Error: ' + e.message, false);
+  } finally {
+    btn.disabled = false; spin.classList.remove('show');
+  }
+}
+
+// ── CASHFREE FLOW ─────────────────────────────────────
+async function payCashfree() {
+  const amount = getAmount(); if (!amount) return;
+  const currency    = document.getElementById('pay-currency').value;
+  const description = document.getElementById('pay-desc').value || 'Kahlon Shipyard Payment';
+  const btn  = document.getElementById('cf-btn');
+  const spin = document.getElementById('cf-spin');
+  btn.disabled = true; spin.classList.add('show');
+
+  try {
+    // 1. Create order on backend
+    const order = await api('/payments/cashfree/create-order', {
+      method: 'POST',
+      body: JSON.stringify({ amount, currency, description })
+    });
+
+    if (!order || order.error) {
+      toast(order?.error || 'Could not create Cashfree order', false);
+      btn.disabled = false; spin.classList.remove('show');
+      return;
+    }
+
+    // 2. Init Cashfree JS SDK
+    const cashfree = await load(order.environment === 'PROD'
+      ? { mode: 'production' }
+      : { mode: 'sandbox' }
+    );
+
+    // 3. Open Cashfree checkout
+    const result = await cashfree.checkout({
+      paymentSessionId: order.payment_session_id,
+      returnUrl: `${window.location.origin}/payments.html?cf_order=${order.order_id}&status=SUCCESS`,
+    });
+
+    if (result.error) {
+      toast('Cashfree error: ' + result.error.message, false);
+    } else if (result.redirect) {
+      // Redirect flow — handled by returnUrl
+      // Verification happens when page reloads with cf_order param
+    } else if (result.paymentDetails) {
+      // Inline flow — verify immediately
+      const verify = await api('/payments/cashfree/verify', {
+        method: 'POST',
+        body: JSON.stringify({ order_id: order.order_id })
+      });
+      if (verify?.success) {
+        showSuccess(order.reference);
+        loadSummary();
+        loadHistory();
+      } else {
+        toast('Payment failed or pending', false);
+      }
+    }
+
+  } catch(e) {
+    toast('Error: ' + e.message, false);
+  } finally {
+    btn.disabled = false; spin.classList.remove('show');
+  }
+}
+
+// ── HANDLE CASHFREE RETURN URL ─────────────────────────
+async function handleReturnUrl() {
+  const params   = new URLSearchParams(window.location.search);
+  const cfOrder  = params.get('cf_order');
+  const status   = params.get('status');
+  if (!cfOrder) return;
+  // Clean URL
+  window.history.replaceState({}, '', '/payments.html');
+  if (status === 'SUCCESS') {
+    // Verify with backend
+    const verify = await api('/payments/cashfree/verify', {
+      method: 'POST',
+      body: JSON.stringify({ order_id: cfOrder })
+    });
+    if (verify?.success) {
+      showSuccess(cfOrder);
+      loadSummary();
+      loadHistory();
+    } else {
+      toast('Payment verification pending', false);
+      loadHistory();
+    }
+  } else {
+    toast('Payment was not completed', false);
+  }
+}
+
+// ── SUCCESS OVERLAY ───────────────────────────────────
+function showSuccess(reference) {
+  document.getElementById('success-ref').textContent = 'Ref: ' + reference;
+  document.getElementById('success-overlay').classList.add('open');
+}
+function closeSuccess() {
+  document.getElementById('success-overlay').classList.remove('open');
+}
+
+// ── LOAD DATA ─────────────────────────────────────────
+async function loadSummary() {
+  const d = await api('/payments/summary');
+  if (!d) return;
+  const cur = document.getElementById('pay-currency').value;
+  const sym = { INR:'₹', USD:'$', EUR:'€', GBP:'£' }[cur] || '₹';
+  document.getElementById('s-rev').textContent  = sym + (d.total_revenue||0).toLocaleString();
+  document.getElementById('s-ok').textContent   = d.completed || 0;
+  document.getElementById('s-pend').textContent = d.pending   || 0;
+  document.getElementById('s-fail').textContent = d.failed    || 0;
+
+  const barsEl = document.getElementById('gw-bars');
+  if (d.by_gateway?.length) {
+    const max = Math.max(...d.by_gateway.map(g => g.total), 1);
+    renderBars('gw-bars', d.by_gateway.map(g => ({
+      label:   g.gateway.charAt(0).toUpperCase() + g.gateway.slice(1),
+      v:       g.total,
+      display: sym + (g.total||0).toLocaleString() + ' (' + g.count + ')'
+    })), max, 'b-green');
+  } else {
+    barsEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">No completed payments yet</div>';
+  }
+}
+
+async function loadHistory() {
+  const data = await api('/payments');
+  const tb   = document.getElementById('hist-tbody');
+  if (!data?.length) {
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:28px;color:var(--muted)">No transactions yet</td></tr>';
+    return;
+  }
+  tb.innerHTML = data.map(p => {
+    const sym = { INR:'₹', USD:'$', EUR:'€', GBP:'£' }[p.currency] || '₹';
+    return `<tr>
+      <td class="num" style="font-size:.6rem;max-width:120px;overflow:hidden;text-overflow:ellipsis">${p.reference || p.gateway_order_id}</td>
+      <td class="num strong">${sym}${parseFloat(p.amount).toLocaleString()}</td>
+      <td><span class="tag">${p.gateway}</span></td>
+      <td><span class="s-${p.status}">${p.status.charAt(0).toUpperCase()+p.status.slice(1)}</span></td>
+      <td class="muted" style="font-size:.65rem;font-family:var(--ff-mono)">${(p.created_at||'').slice(0,10)}</td>
+      <td>${p.status==='completed'
+        ? `<button class="btn btn-danger btn-sm" onclick="refund(${p.id})">↩ Refund</button>`
+        : ''}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function refund(id) {
+  if (!confirm('Process refund for this payment?')) return;
+  const r = await api('/payments/refund', { method:'POST', body: JSON.stringify({ payment_id: id }) });
+  if (r?.message) { toast('Refund initiated ✓'); loadHistory(); loadSummary(); }
+  else toast('Refund failed', false);
+}
+
+// ── INIT ──────────────────────────────────────────────
+detectRegion();
+handleReturnUrl();
+loadSummary();
+loadHistory();
+</script>
+</body>
+</html>

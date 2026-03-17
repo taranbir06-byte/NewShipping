@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Kahlon Shipyard — Sign In</title>
+<link rel="stylesheet" href="css/base.css"/>
+<style>
+/* ── AUTH PAGE LAYOUT ─────────────────────────────── */
+body {
+  min-height: 100vh;
+  display: flex;
+  background: var(--deep);
+  overflow: hidden;
+}
+
+/* LEFT PANEL */
+.auth-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 44px 52px;
+  background:
+    radial-gradient(ellipse 80% 70% at 30% 40%, rgba(42,122,78,.55) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 60% at 70% 80%, rgba(20,61,40,.8) 0%, transparent 60%),
+    linear-gradient(155deg, var(--forest) 0%, var(--deep) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Decorative mountain silhouette */
+.auth-left::before {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 45%;
+  background:
+    polygon(0% 100%, 20% 45%, 35% 65%, 50% 30%, 65% 55%, 80% 35%, 100% 60%, 100% 100%);
+  clip-path: polygon(0% 100%, 12% 55%, 22% 68%, 34% 28%, 46% 50%, 58% 20%, 72% 48%, 85% 32%, 100% 52%, 100% 100%);
+  background: rgba(20,61,40,.7);
+  opacity: .6;
+}
+.auth-left::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 30%;
+  clip-path: polygon(0% 100%, 8% 65%, 18% 80%, 30% 48%, 42% 62%, 55% 35%, 68% 58%, 80% 42%, 92% 60%, 100% 45%, 100% 100%);
+  background: rgba(12,35,24,.85);
+}
+
+.brand-logo {
+  display: flex; align-items: center; gap: 13px;
+  position: relative; z-index: 2;
+}
+.brand-anchor {
+  width: 44px; height: 44px;
+  background: linear-gradient(135deg, var(--sage), var(--moss));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.35rem;
+  box-shadow: 0 4px 20px rgba(61,158,104,.4);
+}
+.brand-text { display: flex; flex-direction: column; }
+.brand-name {
+  font-family: var(--ff-display); font-size: 1.25rem;
+  font-weight: 600; color: var(--white); line-height: 1.1;
+}
+.brand-tagline {
+  font-size: .62rem; color: rgba(168,240,198,.6);
+  text-transform: uppercase; letter-spacing: .12em;
+  font-family: var(--ff-mono);
+}
+
+.hero-copy {
+  position: relative; z-index: 2; padding-bottom: 40%;
+}
+.hero-headline {
+  font-family: var(--ff-display); font-size: 3rem;
+  font-weight: 600; color: var(--white); line-height: 1.15;
+  margin-bottom: 20px;
+  text-shadow: 0 2px 20px rgba(0,0,0,.4);
+}
+.hero-headline em { color: var(--foam); font-style: italic; }
+.hero-desc {
+  font-size: .9rem; color: rgba(168,240,198,.75);
+  line-height: 1.7; max-width: 420px; margin-bottom: 32px;
+}
+.hero-features { display: flex; flex-direction: column; gap: 10px; }
+.hero-feature {
+  display: flex; align-items: center; gap: 10px;
+  font-size: .82rem; color: rgba(240,253,246,.7);
+}
+.hero-feature-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--mint); flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(93,201,138,.6);
+}
+
+.auth-footer-left {
+  position: relative; z-index: 2;
+  font-size: .65rem; color: rgba(168,240,198,.4);
+  font-family: var(--ff-mono);
+}
+
+/* RIGHT PANEL */
+.auth-right {
+  width: 440px; min-width: 440px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 40px 44px;
+  background: var(--offwhite);
+  position: relative;
+  overflow-y: auto;
+}
+
+.auth-card {
+  width: 100%; max-width: 360px;
+}
+
+.auth-card-title {
+  font-family: var(--ff-display); font-size: 1.9rem;
+  font-weight: 600; color: var(--pine);
+  margin-bottom: 6px; text-align: center;
+}
+.auth-card-sub {
+  font-size: .8rem; color: var(--muted);
+  text-align: center; margin-bottom: 28px;
+}
+
+/* TAB SWITCHER */
+.auth-tabs {
+  display: flex; gap: 0;
+  background: var(--border);
+  border-radius: var(--r-sm); padding: 3px;
+  margin-bottom: 26px; border: 1px solid var(--border);
+}
+.auth-tab {
+  flex: 1; text-align: center; padding: 9px;
+  border-radius: 5px; font-size: .8rem; font-weight: 600;
+  cursor: pointer; transition: all .18s; color: var(--muted);
+  border: none; background: transparent; font-family: var(--ff-body);
+}
+.auth-tab.active {
+  background: #fff; color: var(--pine);
+  box-shadow: var(--shadow-sm);
+}
+
+.auth-form { display: none; }
+.auth-form.active { display: block; }
+
+.auth-divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 18px 0; font-size: .72rem; color: var(--muted);
+  font-family: var(--ff-mono);
+}
+.auth-divider::before, .auth-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+.social-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center;
+  gap: 10px; padding: 11px; border-radius: var(--r-sm);
+  border: 1.5px solid var(--border); background: #fff;
+  font-size: .83rem; font-weight: 500; color: var(--text);
+  cursor: pointer; transition: all .18s; font-family: var(--ff-body);
+  margin-bottom: 10px;
+}
+.social-btn:hover { border-color: rgba(30,92,58,.3); background: rgba(30,92,58,.03); }
+.social-google { font-size: 1.1rem; }
+.social-fb { background: #1877f2; color: #fff; border-color: #1877f2; }
+.social-fb:hover { background: #1565d8; border-color: #1565d8; }
+
+.auth-agree {
+  font-size: .68rem; color: var(--muted); text-align: center;
+  margin-top: 14px; line-height: 1.6;
+}
+.auth-agree a { color: var(--fern); text-decoration: underline; }
+
+.input-wrap { position: relative; }
+.input-wrap .form-input { padding-right: 40px; }
+.input-toggle {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-size: .9rem; padding: 0;
+}
+
+.field-err {
+  color: var(--coral); font-size: .68rem;
+  margin-top: 4px; display: none;
+}
+.field-err.show { display: block; }
+
+/* Loading spinner */
+.spinner {
+  width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3);
+  border-top-color: #fff; border-radius: 50%;
+  animation: spin .6s linear infinite; display: none;
+}
+.spinner.show { display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── RESPONSIVE ─────────────────────────────────────── */
+@media (max-width: 840px) {
+  .auth-left { display: none; }
+  .auth-right { width: 100%; min-width: 0; padding: 40px 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- LEFT — hero panel -->
+<div class="auth-left">
+  <div class="brand-logo">
+    <div class="brand-anchor">⚓</div>
+    <div class="brand-text">
+      <div class="brand-name">Kahlon Shipyard</div>
+      <div class="brand-tagline">Fleet Intelligence Platform</div>
+    </div>
+  </div>
+
+  <div class="hero-copy">
+    <h1 class="hero-headline">
+      Fleet Management<br>
+      <em>Made Intelligent</em>
+    </h1>
+    <p class="hero-desc">
+      Monitor your 12-vessel dual-fuel fleet, track EEXI compliance, analyse emissions,
+      and project financials — all in one secure platform.
+    </p>
+    <div class="hero-features">
+      <div class="hero-feature"><div class="hero-feature-dot"></div>Real-time fleet registry &amp; CRUD management</div>
+      <div class="hero-feature"><div class="hero-feature-dot"></div>EEXI &amp; CII compliance tracking</div>
+      <div class="hero-feature"><div class="hero-feature-dot"></div>LNG vs VLSFO fuel cost analytics</div>
+      <div class="hero-feature"><div class="hero-feature-dot"></div>Dividend &amp; NAV projection scenarios</div>
+    </div>
+  </div>
+
+  <div class="auth-footer-left">© 2024 Kahlon Shipyard Ltd · All rights reserved</div>
+</div>
+
+<!-- RIGHT — auth card -->
+<div class="auth-right">
+  <div class="auth-card">
+    <div class="auth-card-title">Get Started</div>
+    <div class="auth-card-sub">Sign in to your fleet dashboard</div>
+
+    <!-- TAB TOGGLE -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login')">Login</button>
+      <button class="auth-tab" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div class="auth-form active" id="form-login">
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" id="login-email" type="email" placeholder="you@company.com" autocomplete="email"/>
+        <div class="field-err" id="login-email-err"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-wrap">
+          <input class="form-input" id="login-pass" type="password" placeholder="Enter your password" autocomplete="current-password"/>
+          <button class="input-toggle" onclick="togglePw('login-pass',this)" tabindex="-1" type="button">👁️</button>
+        </div>
+        <div class="field-err" id="login-pass-err"></div>
+      </div>
+      <div class="field-err show" id="login-global-err" style="display:none;margin-bottom:10px;text-align:center;font-size:.75rem"></div>
+      <button class="btn btn-primary btn-full btn-lg" onclick="doLogin()" id="login-btn">
+        <span class="spinner" id="login-spin"></span>
+        Login
+      </button>
+
+      <div class="auth-divider">OR</div>
+
+      <button class="social-btn" onclick="alert('Google OAuth requires additional server-side setup')">
+        <span class="social-google">G</span> Sign in with Google
+      </button>
+      <button class="social-btn social-fb" onclick="alert('Facebook OAuth requires additional server-side setup')">
+        <span>f</span> Login with Facebook
+      </button>
+
+      <div class="auth-agree">
+        By logging in, you agree to our
+        <a href="#">Privacy Policy</a> and <a href="#">Terms &amp; Conditions</a>.
+      </div>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div class="auth-form" id="form-register">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" id="reg-name" type="text" placeholder="John Smith" autocomplete="name"/>
+        <div class="field-err" id="reg-name-err"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" id="reg-email" type="email" placeholder="you@company.com" autocomplete="email"/>
+        <div class="field-err" id="reg-email-err"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-wrap">
+          <input class="form-input" id="reg-pass" type="password" placeholder="Min. 6 characters" autocomplete="new-password"/>
+          <button class="input-toggle" onclick="togglePw('reg-pass',this)" tabindex="-1" type="button">👁️</button>
+        </div>
+        <div class="field-err" id="reg-pass-err"></div>
+      </div>
+      <div class="field-err show" id="reg-global-err" style="display:none;margin-bottom:10px;text-align:center;font-size:.75rem"></div>
+      <button class="btn btn-primary btn-full btn-lg" onclick="doRegister()" id="reg-btn">
+        <span class="spinner" id="reg-spin"></span>
+        Create Account
+      </button>
+
+      <div class="auth-agree" style="margin-top:14px">
+        By registering, you agree to our
+        <a href="#">Privacy Policy</a> and <a href="#">Terms &amp; Conditions</a>.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:3001/api'
+  : (window.location.origin + '/api');
+
+// ── TAB SWITCH ────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0)===( tab==='login')));
+  document.getElementById('form-login').classList.toggle('active', tab==='login');
+  document.getElementById('form-register').classList.toggle('active', tab==='register');
+}
+
+// ── PASSWORD TOGGLE ───────────────────────────────────
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  inp.type = inp.type==='password' ? 'text' : 'password';
+  btn.textContent = inp.type==='password' ? '👁️' : '🙈';
+}
+
+// ── TOAST ─────────────────────────────────────────────
+function toast(msg, ok=true) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (ok ? 'toast-ok' : 'toast-err');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── FIELD ERROR ───────────────────────────────────────
+function setErr(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+// ── LOGIN ─────────────────────────────────────────────
+async function doLogin() {
+  setErr('login-email-err',''); setErr('login-pass-err','');
+  setErr('login-global-err','');
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  if (!email) { setErr('login-email-err','Email is required'); return; }
+  if (!pass)  { setErr('login-pass-err','Password is required'); return; }
+
+  const btn = document.getElementById('login-btn');
+  const spin = document.getElementById('login-spin');
+  btn.disabled = true; spin.classList.add('show');
+
+  try {
+    const res = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pass })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Login failed');
+    localStorage.setItem('hm_token', data.token);
+    localStorage.setItem('hm_user', JSON.stringify(data.user));
+    toast('Welcome back, ' + data.user.name + '!');
+    setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+  } catch (e) {
+    setErr('login-global-err', e.message);
+    document.getElementById('login-global-err').style.display = 'block';
+  } finally {
+    btn.disabled = false; spin.classList.remove('show');
+  }
+}
+
+// ── REGISTER ──────────────────────────────────────────
+async function doRegister() {
+  setErr('reg-name-err',''); setErr('reg-email-err','');
+  setErr('reg-pass-err',''); setErr('reg-global-err','');
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass  = document.getElementById('reg-pass').value;
+  if (!name)  { setErr('reg-name-err','Name is required'); return; }
+  if (!email) { setErr('reg-email-err','Email is required'); return; }
+  if (!pass || pass.length < 6) { setErr('reg-pass-err','Password must be at least 6 characters'); return; }
+
+  const btn = document.getElementById('reg-btn');
+  const spin = document.getElementById('reg-spin');
+  btn.disabled = true; spin.classList.add('show');
+
+  try {
+    const res = await fetch(`${API}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password: pass })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Registration failed');
+    localStorage.setItem('hm_token', data.token);
+    localStorage.setItem('hm_user', JSON.stringify(data.user));
+    toast('Account created! Redirecting…');
+    setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+  } catch (e) {
+    document.getElementById('reg-global-err').textContent = e.message;
+    document.getElementById('reg-global-err').style.display = 'block';
+  } finally {
+    btn.disabled = false; spin.classList.remove('show');
+  }
+}
+
+// ── ENTER KEY ─────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const loginActive = document.getElementById('form-login').classList.contains('active');
+  loginActive ? doLogin() : doRegister();
+});
+
+// ── ALREADY LOGGED IN ─────────────────────────────────
+if (localStorage.getItem('hm_token')) {
+  window.location.href = 'dashboard.html';
+}
+</script>
+</body>
+</html>

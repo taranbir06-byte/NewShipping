@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+
+# Database files (Railway uses persistent volume)
+backend/kahlon.db
+backend/kahlon.db-shm
+backend/kahlon.db-wal
+*.db
+*.db-shm
+*.db-wal
+
+# Environment files — NEVER commit these
+.env
+.env.local
+.env.production
+backend/.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Misc
+{backend/
