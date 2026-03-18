@@ -1,4 +1,3 @@
-cat > frontend/js/app.js << 'EOF'
 // ═══════════════════════════════════════════════════════
 //  KAHLON SHIPYARD — Shared JS Module
 // ═══════════════════════════════════════════════════════
@@ -7,7 +6,6 @@ const API_BASE = (window.location.hostname === 'localhost' || window.location.ho
   ? 'http://localhost:3001/api'
   : 'https://newshipping-production.up.railway.app/api';
 
-// ── AUTH HELPERS ──────────────────────────────────────
 const Auth = {
   token: () => localStorage.getItem('hm_token'),
   user:  () => JSON.parse(localStorage.getItem('hm_user') || 'null'),
@@ -25,7 +23,6 @@ const Auth = {
   }
 };
 
-// ── API CLIENT ────────────────────────────────────────
 async function api(endpoint, opts = {}) {
   const token = Auth.token();
   try {
@@ -47,7 +44,6 @@ async function api(endpoint, opts = {}) {
   }
 }
 
-// ── TOAST ─────────────────────────────────────────────
 function toast(msg, ok = true) {
   let t = document.getElementById('toast');
   if (!t) {
@@ -62,7 +58,6 @@ function toast(msg, ok = true) {
   t._tid = setTimeout(() => t.classList.remove('show'), 3200);
 }
 
-// ── BAR CHART ─────────────────────────────────────────
 function renderBars(containerId, data, maxVal, cls = 'b-green') {
   const el = document.getElementById(containerId);
   if (!el) return;
@@ -78,7 +73,6 @@ function renderBars(containerId, data, maxVal, cls = 'b-green') {
     </div>`).join('');
 }
 
-// ── MODAL HELPERS ─────────────────────────────────────
 function openModal(id)  { document.getElementById('modal-' + id).classList.add('open'); }
 function closeModal(id) { document.getElementById('modal-' + id).classList.remove('open'); }
 
@@ -88,12 +82,10 @@ function initModalClose() {
   );
 }
 
-// ── FORMAT HELPERS ────────────────────────────────────
 function fmt(n)       { return n != null ? Number(n).toLocaleString() : '—'; }
 function fmtM(n)      { return n != null ? '$' + n + 'm' : '—'; }
 function fmtSave(n)   { return (n >= 0 ? '+' : '') + '$' + (n / 1e6).toFixed(2) + 'm/yr'; }
 
-// ── PAGE NAV ──────────────────────────────────────────
 function showPage(page, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -109,4 +101,3 @@ function showPage(page, el) {
   if (titleEl) titleEl.textContent = titles[page] || page;
   if (window.LOADERS && LOADERS[page]) LOADERS[page]();
 }
-EOF
