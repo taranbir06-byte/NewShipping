@@ -11,21 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://localhost:5173",
-    "https://shipping-orpin.vercel.app",
-    "https://new-shipping-zeta.vercel.app",
-    "https://newshipping-production-up.railway.app",
-    ...(process.env.RAILWAY_STATIC_URL ? [`https://${process.env.RAILWAY_STATIC_URL}`] : []),
-    ...(process.env.APP_URL ? [process.env.APP_URL] : []),
-  ],
-  methods: ["GET","POST","PUT","DELETE"],
-  allowedHeaders: ["Content-Type","Authorization"]
-}));
-
+app.use(cors());
 app.use(express.json());
 
 const db = initDB();
