@@ -10,14 +10,23 @@ const paymentRoutes = require('./routes/payments');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+const corsOptions = {
+  origin: true,
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 204
+};
+
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors());
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 
 const db = initDB();
 
-app.get("/health", (req,res) => res.send("OK"));
-app.get("/", (req,res) => res.send("Kahlon Shipyard API running"));
+app.get('/health', (req, res) => res.send('OK'));
+app.get('/', (req, res) => res.send('Kahlon Shipyard API running'));
 
 app.use('/api/auth', authRoutes(db));
 app.use('/api/payments', paymentRoutes(db));
