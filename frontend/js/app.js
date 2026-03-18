@@ -1,12 +1,11 @@
+cat > frontend/js/app.js << 'EOF'
 // ═══════════════════════════════════════════════════════
 //  KAHLON SHIPYARD — Shared JS Module
 // ═══════════════════════════════════════════════════════
 
-// Auto-detects: same origin in production (Railway serves frontend + backend together),
-// localhost:3001 in local development
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3001/api'
-  : (window.location.origin + '/api');
+  : 'https://newshipping-production-up.railway.app/api';
 
 // ── AUTH HELPERS ──────────────────────────────────────
 const Auth = {
@@ -110,3 +109,4 @@ function showPage(page, el) {
   if (titleEl) titleEl.textContent = titles[page] || page;
   if (window.LOADERS && LOADERS[page]) LOADERS[page]();
 }
+EOF
