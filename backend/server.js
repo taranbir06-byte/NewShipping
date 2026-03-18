@@ -1,6 +1,4 @@
 const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
 const path = require('path');
 const { initDB } = require('./db');
 const authRoutes = require('./routes/auth');
@@ -8,19 +6,16 @@ const fleetRoutes = require('./routes/fleet');
 const paymentRoutes = require('./routes/payments');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 8080;
 
-const corsOptions = {
-  origin: true,
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization'],
-  credentials: true,
-  optionsSuccessStatus: 204
-};
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
 
-app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
 app.use(express.json());
 
 const db = initDB();
@@ -38,9 +33,6 @@ app.use(express.static(frontendPath));
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ error: 'Not found' });
-  }
-  if (req.path.endsWith('.html')) {
-    return res.sendFile(path.join(frontendPath, req.path));
   }
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
